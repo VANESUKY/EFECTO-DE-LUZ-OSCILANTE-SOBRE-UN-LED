@@ -1,0 +1,73 @@
+PROCESSOR 16F887
+    
+#include <xc.inc>
+	
+CONFIG FOSC = INTRC_NOCLKOUT
+CONFIG WDTE = OFF
+CONFIG PWRTE = ON
+CONFIG MCLRE = OFF
+CONFIG CP = OFF
+CONFIG CPD = OFF
+CONFIG BOREN = OFF
+CONFIG IESO = OFF
+CONFIG FCMEN = ON
+CONFIG DEBUG = ON
+    
+CONFIG BOR4V=BOR40V
+CONFIG WRT = OFF
+    
+PSECT udata
+pausa1:
+    DS 1
+pausa2:
+    DS 1
+pausa3:
+    DS 1
+    
+PSECT resetVec,class=CODE,delta=2
+resetVec:
+    PAGESEL	main
+    goto	main
+    
+PSECT	 code
+    main:
+    BANKSEL	ANSEL	    ;nos dirijimos al banco ansel 
+    CLRF	ANSEL	    ;desactivamos el modo análogico 
+    BANKSEL	TRISA	    ;Se trabajará en el reg. trisa
+    MOVLW	0b00000000  ;se establecen los bits de salida
+    MOVWF	TRISA	    ;Los bits de salida se colocan en TRISA
+    BANKSEL	PORTA	    ;se trabaja en PORTA
+    CLRF	PORTA	    ;se inicializa PORTA como salida
+    bcf		0x03,5	    ;Se coloca en 0 el bit 5 del reg. status
+    bsf		0x03,6	    ;se coloca en 1 el bit 6 del reg. status
+    bcf		0x03,0	    ;no ocurre acarreo en el MSB del resultado
+    BANKSEL	OSCCON	    ;se trabaja en el registo OSCCON
+    MOVLW	0b01110000  ;se carga esta literal al reg. w
+    MOVWF	OSCCON	    ;el reg.w se carga en f
+    
+    INICIO:
+    bcf		0x03,0
+    bcf		0x03,5
+    bcf		0x03,6
+    MOVLW	0b00000001  ;se cargan los bits de inicialización
+    MOVWF	PORTA	    ;en el puerto A para su salida. 
+    GOTO	INCRE_IZQ   ;salto a incre_izq
+    
+    INCRE_IZQ:
+    RLF		PORTA	    ;rotación a la izq, usando carry en PORTA
+    BTFSS	PORTA,7	    ;se carga en el bit 7 para su rotación
+    GOTO	INCRE_IZQ
+    GOTO	INCRE_DER
+    
+    INCRE_DER:
+    RRF		PORTA	    ;rotación a la der, usando carry en PORTA
+    BTFSS	PORTA,0	    ;se carga en el bit 0 para su rotación
+    GOTO	INCRE_DER
+    GOTO	INICIO 
+    END
+    
+    MÉNDEZ OSORIO JULIA VANESSA
+    NUM CONTROL 17080238
+    INSTITUTO TECNOLOGICO SUPERIOR DE COATZACOALCOS
+    MATERIA MICROCONTROLADORE
+    DOCENTE: JORGE ALBERTO SILVA VALENZUELA
